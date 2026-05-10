@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>럭키 캐논 🎯</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: radial-gradient(ellipse at 50% 30%, #0d1b3e 0%, #070b13 70%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* ── SETUP PANEL ── */
+    #setup {
+      width: 100%;
+      max-width: 520px;
+      padding: 40px 24px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #setup h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      text-shadow: 0 0 30px #4fc3f7aa;
+    }
+
+    #setup p {
+      font-size: 1rem;
+      color: #90caf9;
+      margin-top: -10px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    #nameInput {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 2px solid #1e3a5f;
+      background: #0d1f38;
+      color: #e0f0ff;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    #nameInput:focus { border-color: #4fc3f7; }
+    #nameInput::placeholder { color: #456; }
+
+    .btn {
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+      transition: transform .1s, box-shadow .2s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn:active { transform: translateY(0); }
+
+    #addBtn {
+      background: linear-gradient(135deg, #1565c0, #1976d2);
+      color: #fff;
+      box-shadow: 0 4px 15px #1976d240;
+    }
+
+    #nameList {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: 100%;
+      min-height: 36px;
+    }
+
+    .name-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: #0d2040;
+      border: 1.5px solid #1e4a7f;
+      font-size: .9rem;
+      color: #b3d9ff;
+      animation: chipIn .2s ease;
+    }
+    @keyframes chipIn {
+      from { transform: scale(.7); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .name-chip button {
+      background: none;
+      border: none;
+      color: #5c8ab0;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0 2px;
+    }
+    .name-chip button:hover { color: #ef5350; }
+
+    #startBtn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #e65100, #f4511e);
+      color: #fff;
+      font-size: 1.2rem;
+      border-radius: 14px;
+      box-shadow: 0 6px 24px #f451205a;
+    }
+    #startBtn:disabled {
+      background: #1a2540;
+      color: #3a5580;
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── GAME WRAPPER ── */
+    #game {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    #canvasWrap {
+      position: relative;
+      width: min(600px, 100vw);
+    }
+
+    #canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 0 0 16px 16px;
+    }
+
+    /* ── RESULT OVERLAY ── */
+    #resultOverlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(5,10,25,.88);
+      border-radius: 16px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      animation: fadeIn .5s ease;
+    }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+    .result-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 40px 48px;
+      background: linear-gradient(160deg, #0d233d, #071528);
+      border: 2px solid #1e5090;
+      border-radius: 24px;
+      box-shadow: 0 0 60px #1976d240, 0 0 120px #1976d215;
+      text-align: center;
+    }
+
+    .result-trophy { font-size: 4rem; animation: bounce 1s infinite alternate; }
+    @keyframes bounce { from{transform:translateY(0)} to{transform:translateY(-12px)} }
+
+    .result-label {
+      font-size: 1.1rem;
+      color: #90caf9;
+      letter-spacing: 2px;
+    }
+
+    #winnerName {
+      font-size: 2.6rem;
+      font-weight: 900;
+      background: linear-gradient(90deg, #ffd54f, #ff8f00, #ffd54f);
+      background-size: 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 2s infinite;
+    }
+    @keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+
+    #rankList {
+      margin-top: 4px;
+      font-size: .85rem;
+      color: #78909c;
+      line-height: 1.8;
+    }
+
+    #resetBtn {
+      margin-top: 8px;
+      padding: 12px 32px;
+      background: linear-gradient(135deg, #1565c0, #1976d2);
+      color: #fff;
+      font-size: 1rem;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      box-shadow: 0 4px 16px #1976d250;
+      transition: transform .1s;
+    }
+    #resetBtn:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ SETUP ═══════════════ -->
+<div id="setup">
+  <h1>🎯 럭키 캐논</h1>
+  <p>이름을 입력하고 마지막으로 착지하는 구슬의 주인이 당첨!</p>
+  <div class="input-row">
+    <input id="nameInput" type="text" placeholder="이름 입력 (최대 8자)..." maxlength="8" />
+    <button class="btn" id="addBtn">추가</button>
+  </div>
+  <div id="nameList"></div>
+  <button class="btn" id="startBtn" disabled>추첨 시작!</button>
+</div>
+
+<!-- ═══════════════ GAME ═══════════════ -->
+<div id="game">
+  <div id="canvasWrap">
+    <canvas id="canvas" width="600" height="760"></canvas>
+    <div id="resultOverlay">
+      <div class="result-card">
+        <div class="result-trophy">🏆</div>
+        <div class="result-label">당 첨 자</div>
+        <div id="winnerName"></div>
+        <div id="rankList"></div>
+        <button id="resetBtn">다시 추첨하기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  COMPAT HELPER
+// ══════════════════════════════════════════════
+function roundedRect(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.lineTo(x + w - r, y);
+  c.quadraticCurveTo(x + w, y, x + w, y + r);
+  c.lineTo(x + w, y + h - r);
+  c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  c.lineTo(x + r, y + h);
+  c.quadraticCurveTo(x, y + h, x, y + h - r);
+  c.lineTo(x, y + r);
+  c.quadraticCurveTo(x, y, x + r, y);
+  c.closePath();
+}
+
+// ══════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════
+const W = 600, H = 760;
+const GRAVITY   = 0.32;
+const RESTITUTION = 0.52;   // peg bounce
+const FLOOR_REST  = 0.38;   // floor bounce
+const AIR_DRAG    = 0.9985;
+const FLOOR_DRAG  = 0.72;
+const BALL_R    = 17;
+const PEG_R     = 9;
+const WALL_L    = 28;
+const WALL_R    = 572;
+const FLOOR_Y   = 710;
+const FIRE_SPEED = 10.5;
+const FIRE_INTERVAL = 95; // frames between shots
+const SETTLE_FRAMES = 80;  // consecutive slow frames to count as settled
+
+const COLORS = [
+  '#FF6B6B','#4ECDC4','#45B7D1','#FFEAA7','#DDA0DD',
+  '#98D8C8','#F9CA24','#A29BFE','#FD79A8','#55EFC4',
+  '#FDCB6E','#E17055','#74B9FF','#00CEC9','#6C5CE7'
+];
+
+// ══════════════════════════════════════════════
+//  DOM
+// ══════════════════════════════════════════════
+const setupEl    = document.getElementById('setup');
+const gameEl     = document.getElementById('game');
+const canvas     = document.getElementById('canvas');
+const ctx        = canvas.getContext('2d');
+const resultEl   = document.getElementById('resultOverlay');
+const winnerEl   = document.getElementById('winnerName');
+const rankListEl = document.getElementById('rankList');
+const nameInput  = document.getElementById('nameInput');
+const addBtn     = document.getElementById('addBtn');
+const startBtn   = document.getElementById('startBtn');
+const resetBtn   = document.getElementById('resetBtn');
+const nameListEl = document.getElementById('nameList');
+
+// ══════════════════════════════════════════════
+//  SETUP LOGIC
+// ══════════════════════════════════════════════
+let names = [];
+
+function renderChips() {
+  nameListEl.innerHTML = '';
+  names.forEach((n, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'name-chip';
+    chip.innerHTML = `<span>${n}</span><button title="삭제" data-i="${i}">×</button>`;
+    nameListEl.appendChild(chip);
+  });
+  startBtn.disabled = names.length < 2;
+}
+
+function addName() {
+  const v = nameInput.value.trim();
+  if (!v) return;
+  if (names.includes(v)) { nameInput.select(); return; }
+  if (names.length >= 15) return;
+  names.push(v);
+  nameInput.value = '';
+  renderChips();
+  nameInput.focus();
+}
+
+nameListEl.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-i]');
+  if (!btn) return;
+  names.splice(+btn.dataset.i, 1);
+  renderChips();
+});
+
+addBtn.addEventListener('click', addName);
+nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') addName(); });
+
+// ══════════════════════════════════════════════
+//  PEG LAYOUT
+// ══════════════════════════════════════════════
+function buildPegs() {
+  const pegs = [];
+  const ROWS = 9, SPACING = 70;
+  for (let r = 0; r < ROWS; r++) {
+    const even  = r % 2 === 0;
+    const count = even ? 7 : 6;
+    const totalW = (count - 1) * SPACING;
+    const sx = (W - totalW) / 2;
+    const y  = 190 + r * 56;
+    for (let c = 0; c < count; c++) {
+      pegs.push({ x: sx + c * SPACING, y });
+    }
+  }
+  return pegs;
+}
+const pegs = buildPegs();
+
+// ══════════════════════════════════════════════
+//  STARS (background)
+// ══════════════════════════════════════════════
+const stars = Array.from({ length: 90 }, () => ({
+  x: Math.random() * W,
+  y: Math.random() * H,
+  r: Math.random() * 1.4 + 0.3,
+  a: Math.random() * 0.7 + 0.2,
+}));
+
+// ══════════════════════════════════════════════
+//  BALL CLASS
+// ══════════════════════════════════════════════
+class Ball {
+  constructor(name, color, x, y, vx, vy) {
+    this.name    = name;
+    this.color   = color;
+    this.x = x; this.y = y;
+    this.vx = vx; this.vy = vy;
+    this.settled     = false;
+    this.settledAt   = null;
+    this.slowFrames  = 0;
+    this.rank        = null;
+    this.pulse       = 0; // glow pulse on settle
+  }
+
+  update() {
+    if (this.settled) {
+      if (this.pulse > 0) this.pulse -= 0.05;
+      return;
+    }
+
+    this.vy += GRAVITY;
+    this.vx *= AIR_DRAG;
+    this.vy *= AIR_DRAG;
+
+    this.x += this.vx;
+    this.y += this.vy;
+
+    // Wall collisions
+    if (this.x - BALL_R < WALL_L) {
+      this.x  = WALL_L + BALL_R;
+      this.vx = Math.abs(this.vx) * RESTITUTION;
+    }
+    if (this.x + BALL_R > WALL_R) {
+      this.x  = WALL_R - BALL_R;
+      this.vx = -Math.abs(this.vx) * RESTITUTION;
+    }
+
+    // Floor collision
+    if (this.y + BALL_R >= FLOOR_Y) {
+      this.y  = FLOOR_Y - BALL_R;
+      this.vy = -Math.abs(this.vy) * FLOOR_REST;
+      this.vx *= FLOOR_DRAG;
+    }
+
+    // Peg collisions
+    for (const p of pegs) {
+      const dx = this.x - p.x, dy = this.y - p.y;
+      const dist2 = dx * dx + dy * dy;
+      const min   = BALL_R + PEG_R;
+      if (dist2 < min * min) {
+        const dist = Math.sqrt(dist2) || 0.001;
+        const nx = dx / dist, ny = dy / dist;
+        // Push out
+        this.x = p.x + nx * min;
+        this.y = p.y + ny * min;
+        // Reflect
+        const dot = this.vx * nx + this.vy * ny;
+        this.vx = (this.vx - 2 * dot * nx) * RESTITUTION;
+        this.vy = (this.vy - 2 * dot * ny) * RESTITUTION;
+        // Tiny random nudge for chaos
+        this.vx += (Math.random() - 0.5) * 0.6;
+        this.vy += (Math.random() - 0.5) * 0.3;
+      }
+    }
+
+    // Settle detection
+    const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+    const nearFloor = this.y + BALL_R >= FLOOR_Y - 2;
+    if (nearFloor && speed < 1.4) {
+      this.slowFrames++;
+      if (this.slowFrames >= SETTLE_FRAMES) {
+        this.settled  = true;
+        this.settledAt = Date.now();
+        this.vx = this.vy = 0;
+        this.y  = FLOOR_Y - BALL_R;
+        this.pulse = 1;
+      }
+    } else {
+      this.slowFrames = 0;
+    }
+  }
+
+  draw(ctx) {
+    const dimmed = this.settled && this.rank !== null && this.rank < settledCount;
+
+    ctx.save();
+    if (dimmed) ctx.globalAlpha = 0.45;
+
+    // Outer glow
+    const glowR = BALL_R * 2.2 + (this.pulse > 0 ? this.pulse * 18 : 0);
+    const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, glowR);
+    grad.addColorStop(0, this.color + '70');
+    grad.addColorStop(1, this.color + '00');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Ball body
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, BALL_R, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Shine
+    ctx.fillStyle = 'rgba(255,255,255,.38)';
+    ctx.beginPath();
+    ctx.arc(this.x - 5, this.y - 5, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Name label
+    const label = this.name.length > 4 ? this.name.slice(0, 3) + '..' : this.name;
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${this.name.length > 3 ? 9 : 10}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, this.x, this.y + 1);
+
+    // Winner crown
+    if (this.settled && this.rank === settledCount) {
+      ctx.font = '14px sans-serif';
+      ctx.fillText('👑', this.x, this.y - BALL_R - 10);
+    }
+
+    ctx.restore();
+  }
+}
+
+// ══════════════════════════════════════════════
+//  CANNON
+// ══════════════════════════════════════════════
+const cannon = {
+  x: W / 2, y: 72,
+  angle: 0,        // current barrel angle (from down)
+  targetAngle: 0,
+  flash: 0,        // flash timer
+  loadBall: null,  // ball shown loading in barrel
+};
+
+function drawCannon(c) {
+  const { x, y, angle, flash } = cannon;
+  c.save();
+  c.translate(x, y);
+
+  // Barrel
+  c.save();
+  c.rotate(angle);
+  const barGrad = c.createLinearGradient(-12, 0, 12, 0);
+  barGrad.addColorStop(0, '#37474f');
+  barGrad.addColorStop(.5, '#90a4ae');
+  barGrad.addColorStop(1, '#37474f');
+  c.fillStyle = barGrad;
+  c.shadowColor = '#78909c';
+  c.shadowBlur = 6;
+  // Barrel rect
+  roundedRect(c, -11, 0, 22, 58, 5);
+  c.fill();
+  c.shadowBlur = 0;
+  // Muzzle ring
+  c.strokeStyle = '#607d8b';
+  c.lineWidth = 3;
+  roundedRect(c, -13, 48, 26, 12, 4);
+  c.stroke();
+  // Flash
+  if (flash > 0) {
+    const alpha = flash / 18;
+    const fg = c.createRadialGradient(0, 64, 0, 0, 64, 22);
+    fg.addColorStop(0, `rgba(255,220,60,${alpha})`);
+    fg.addColorStop(.5, `rgba(255,120,0,${alpha * .6})`);
+    fg.addColorStop(1, 'rgba(255,80,0,0)');
+    c.fillStyle = fg;
+    c.beginPath();
+    c.arc(0, 64, 22, 0, Math.PI * 2);
+    c.fill();
+  }
+  c.restore();
+
+  // Base wheel
+  const baseGrad = c.createRadialGradient(-6, -6, 2, 0, 0, 28);
+  baseGrad.addColorStop(0, '#9e9e9e');
+  baseGrad.addColorStop(1, '#263238');
+  c.fillStyle = baseGrad;
+  c.shadowColor = '#000';
+  c.shadowBlur = 10;
+  c.beginPath();
+  c.arc(0, 0, 26, 0, Math.PI * 2);
+  c.fill();
+  c.strokeStyle = '#546e7a';
+  c.lineWidth = 2;
+  c.stroke();
+  c.shadowBlur = 0;
+
+  // Wheel spokes
+  for (let i = 0; i < 6; i++) {
+    const a = i * Math.PI / 3;
+    c.strokeStyle = '#455a64';
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(0, 0);
+    c.lineTo(Math.cos(a) * 20, Math.sin(a) * 20);
+    c.stroke();
+  }
+
+  c.restore();
+}
+
+// Ball exit position from barrel tip
+function cannonExitPos() {
+  const len = 62;
+  return {
+    x: cannon.x + Math.sin(cannon.angle) * len,
+    y: cannon.y + Math.cos(cannon.angle) * len,
+  };
+}
+
+// ══════════════════════════════════════════════
+//  CONFETTI
+// ══════════════════════════════════════════════
+let confetti = [];
+function spawnConfetti() {
+  for (let i = 0; i < 80; i++) {
+    confetti.push({
+      x: Math.random() * W,
+      y: Math.random() * -H * .5,
+      vx: (Math.random() - .5) * 4,
+      vy: Math.random() * 2 + 1,
+      w: Math.random() * 10 + 5,
+      h: Math.random() * 6 + 3,
+      rot: Math.random() * Math.PI * 2,
+      rotV: (Math.random() - .5) * .2,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      life: 1,
+    });
+  }
+}
+function updateConfetti() {
+  confetti = confetti.filter(c => c.life > 0);
+  confetti.forEach(c => {
+    c.x  += c.vx;
+    c.y  += c.vy;
+    c.rot += c.rotV;
+    c.vy += 0.06;
+    if (c.y > H + 10) c.life = 0;
+  });
+}
+function drawConfetti(c) {
+  confetti.forEach(p => {
+    c.save();
+    c.translate(p.x, p.y);
+    c.rotate(p.rot);
+    c.fillStyle = p.color;
+    c.globalAlpha = p.life;
+    c.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    c.restore();
+  });
+}
+
+// ══════════════════════════════════════════════
+//  QUEUE DISPLAY (names waiting)
+// ══════════════════════════════════════════════
+function drawQueue(c, queueNames, firedCount) {
+  const remaining = queueNames.slice(firedCount);
+  if (remaining.length === 0) return;
+
+  c.save();
+  c.font = 'bold 12px sans-serif';
+  c.textBaseline = 'middle';
+
+  const label = '발사 대기';
+  c.fillStyle = '#546e7a';
+  c.font = '10px sans-serif';
+  c.textAlign = 'left';
+  c.fillText(label, 34, 48);
+
+  remaining.slice(0, 6).forEach((name, i) => {
+    const col = COLORS[(firedCount + i) % COLORS.length];
+    const cx  = 34 + i * 48;
+    const cy  = 68;
+    if (cx + 38 > W - 30) return;
+    // Mini ball
+    c.fillStyle = col + '50';
+    c.beginPath();
+    c.arc(cx + 16, cy, 14, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = col;
+    c.beginPath();
+    c.arc(cx + 16, cy, 11, 0, Math.PI * 2);
+    c.fill();
+    // Name
+    const lbl = name.length > 3 ? name.slice(0, 2) + '..' : name;
+    c.fillStyle = '#fff';
+    c.font = `bold ${name.length > 3 ? 8 : 9}px sans-serif`;
+    c.textAlign = 'center';
+    c.fillText(lbl, cx + 16, cy + 1);
+  });
+  if (remaining.length > 6) {
+    c.fillStyle = '#78909c';
+    c.font = '11px sans-serif';
+    c.textAlign = 'left';
+    c.fillText(`+${remaining.length - 6}`, 34 + 6 * 48, 68);
+  }
+  c.restore();
+}
+
+// ══════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════
+let balls       = [];
+let queue       = [];
+let firedCount  = 0;
+let settledCount = 0;
+let cannonPhase = 'idle';  // idle | aiming | ready | fired | done
+let phaseTimer  = 0;
+let waitTimer   = 0;
+let gameActive  = false;
+let animId      = null;
+
+function startGame() {
+  setupEl.style.display = 'none';
+  gameEl.style.display  = 'flex';
+  resultEl.style.display = 'none';
+
+  balls       = [];
+  queue       = [...names];
+  firedCount  = 0;
+  settledCount = 0;
+  confetti    = [];
+  cannonPhase = 'idle';
+  phaseTimer  = 0;
+  waitTimer   = 0;
+  gameActive  = true;
+  cannon.angle = 0;
+  cannon.flash = 0;
+
+  if (animId) cancelAnimationFrame(animId);
+  animId = requestAnimationFrame(loop);
+}
+
+function getAimAngle() {
+  return (Math.random() - 0.5) * (Math.PI / 2.2);
+}
+
+function fireBall() {
+  const i   = firedCount;
+  const name  = queue[i];
+  const color = COLORS[i % COLORS.length];
+  const pos   = cannonExitPos();
+  const vx    = Math.sin(cannon.angle) * FIRE_SPEED;
+  const vy    = Math.cos(cannon.angle) * FIRE_SPEED;
+  balls.push(new Ball(name, color, pos.x, pos.y, vx, vy));
+  cannon.flash = 18;
+  firedCount++;
+}
+
+function allSettled() {
+  return balls.length > 0 && balls.every(b => b.settled);
+}
+
+function assignRanks() {
+  const sorted = [...balls].sort((a, b) => a.settledAt - b.settledAt);
+  sorted.forEach((b, i) => { b.rank = i + 1; });
+  settledCount = sorted.length;
+}
+
+function showResult() {
+  assignRanks();
+  const winner = balls.find(b => b.rank === settledCount);
+  winnerEl.textContent = winner ? winner.name : '?';
+
+  // Show ranking (last → first settled)
+  const sorted = [...balls].sort((a, b) => b.rank - a.rank);
+  rankListEl.innerHTML = sorted
+    .map((b, i) => `${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`} ${b.name}`)
+    .join('  ·  ');
+
+  resultEl.style.display = 'flex';
+  spawnConfetti();
+}
+
+// ══════════════════════════════════════════════
+//  MAIN LOOP
+// ══════════════════════════════════════════════
+function loop() {
+  if (!gameActive) return;
+  update();
+  render();
+  animId = requestAnimationFrame(loop);
+}
+
+function update() {
+  // Smooth cannon aiming
+  cannon.angle += (cannon.targetAngle - cannon.angle) * 0.09;
+  if (cannon.flash > 0) cannon.flash--;
+
+  // Cannon firing sequence
+  switch (cannonPhase) {
+    case 'idle':
+      if (firedCount < queue.length) {
+        cannon.targetAngle = getAimAngle();
+        cannonPhase = 'aiming';
+        phaseTimer  = 0;
+      } else {
+        cannonPhase = 'done';
+      }
+      break;
+
+    case 'aiming':
+      phaseTimer++;
+      if (phaseTimer > 10 && Math.abs(cannon.angle - cannon.targetAngle) < 0.03) {
+        cannonPhase = 'ready';
+        phaseTimer  = 0;
+      }
+      break;
+
+    case 'ready':
+      phaseTimer++;
+      if (phaseTimer > 18) {
+        fireBall();
+        cannonPhase = 'fired';
+        phaseTimer  = 0;
+      }
+      break;
+
+    case 'fired':
+      phaseTimer++;
+      if (phaseTimer >= FIRE_INTERVAL) {
+        if (firedCount < queue.length) {
+          cannon.targetAngle = getAimAngle();
+          cannonPhase = 'aiming';
+        } else {
+          cannonPhase = 'done';
+        }
+        phaseTimer = 0;
+      }
+      break;
+
+    case 'done':
+      waitTimer++;
+      // Force-settle any stuck ball after 18 seconds
+      if (waitTimer > 1080) {
+        balls.forEach(b => {
+          if (!b.settled) {
+            b.settled = true;
+            b.settledAt = Date.now();
+            b.vx = b.vy = 0;
+            b.y  = FLOOR_Y - BALL_R;
+          }
+        });
+      }
+      // Check if all settled; update running settledCount
+      const nowSettled = balls.filter(b => b.settled).length;
+      if (nowSettled !== settledCount && nowSettled > 0) {
+        settledCount = nowSettled; // live rank update
+      }
+      if (allSettled() && resultEl.style.display === 'none') {
+        showResult();
+      }
+      break;
+  }
+
+  balls.forEach(b => b.update());
+  updateConfetti();
+}
+
+function render() {
+  // Background
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#07111e');
+  bg.addColorStop(1, '#030a14');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars
+  stars.forEach(s => {
+    ctx.fillStyle = `rgba(255,255,255,${s.a})`;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Walls
+  ctx.fillStyle = 'rgba(100,130,160,.18)';
+  ctx.fillRect(0, 140, WALL_L, H - 140);
+  ctx.fillRect(WALL_R, 140, W - WALL_R, H - 140);
+
+  // Floor
+  const floorGrad = ctx.createLinearGradient(WALL_L, FLOOR_Y, WALL_L, FLOOR_Y + 18);
+  floorGrad.addColorStop(0, '#1e3a5f');
+  floorGrad.addColorStop(1, '#0a1a30');
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(WALL_L, FLOOR_Y, WALL_R - WALL_L, 22);
+  ctx.strokeStyle = '#4fc3f7';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(WALL_L, FLOOR_Y);
+  ctx.lineTo(WALL_R, FLOOR_Y);
+  ctx.stroke();
+
+  // Pegs
+  pegs.forEach(p => {
+    // Glow
+    const pg = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, PEG_R * 3);
+    pg.addColorStop(0, 'rgba(79,195,247,.25)');
+    pg.addColorStop(1, 'rgba(79,195,247,0)');
+    ctx.fillStyle = pg;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, PEG_R * 3, 0, Math.PI * 2);
+    ctx.fill();
+    // Core
+    ctx.fillStyle = '#4fc3f7';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, PEG_R, 0, Math.PI * 2);
+    ctx.fill();
+    // Shine
+    ctx.fillStyle = 'rgba(255,255,255,.5)';
+    ctx.beginPath();
+    ctx.arc(p.x - 2, p.y - 3, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Queue display
+  drawQueue(ctx, queue, firedCount);
+
+  // Balls
+  balls.forEach(b => b.draw(ctx));
+
+  // Cannon (drawn on top of balls near cannon)
+  drawCannon(ctx);
+
+  // Confetti
+  drawConfetti(ctx);
+
+  // "발사 중..." indicator
+  if (cannonPhase !== 'done' && firedCount < queue.length) {
+    const remaining = queue.length - firedCount;
+    ctx.fillStyle = 'rgba(144,202,249,.7)';
+    ctx.font      = '12px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`남은 구슬: ${remaining}개`, W - 34, 30);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  RESET
+// ══════════════════════════════════════════════
+function resetGame() {
+  gameActive = false;
+  if (animId) cancelAnimationFrame(animId);
+  gameEl.style.display   = 'none';
+  setupEl.style.display  = 'flex';
+  resultEl.style.display = 'none';
+}
+
+// ══════════════════════════════════════════════
+//  EVENTS
+// ══════════════════════════════════════════════
+startBtn.addEventListener('click', () => {
+  if (names.length >= 2) startGame();
+});
+resetBtn.addEventListener('click', resetGame);
+
+// Demo names for quick test (remove in prod)
+// names = ['김철수','이영희','박민준','최지연','한서윤'];
+// renderChips();
+</script>
+</body>
+</html>
